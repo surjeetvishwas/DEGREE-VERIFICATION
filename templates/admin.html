@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Admin – Student List</title>
+  <style>
+    body, html {
+      margin: 0; 
+      padding: 0;
+      font-family: "Arial", sans-serif;
+      background: #f2f2f2;
+    }
+    .header {
+      background: #ffffff;
+      border-bottom: 1px solid #dddddd;
+      padding: 10px 20px;
+      text-align: center;
+    }
+    .header h2 {
+      margin: 0;
+      color: #333333;
+    }
+    .content {
+      margin: 30px auto;
+      width: 95%;
+      max-width: 1000px;
+      background: #ffffff;
+      border: 1px solid #dddddd;
+      border-radius: 4px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .content .add-btn {
+      display: inline-block;
+      margin-bottom: 20px;
+      padding: 8px 16px;
+      background: #28a745;
+      color: #ffffff;
+      text-decoration: none;
+      border-radius: 4px;
+      transition: background 0.2s;
+    }
+    .content .add-btn:hover {
+      background: #218838;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+    }
+    th, td {
+      border: 1px solid #cccccc;
+      padding: 8px 12px;
+      text-align: center;
+    }
+    th {
+      background: #1f497d;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .action-buttons a {
+      margin: 0 4px;
+      text-decoration: none;
+      color: #007bdb;
+    }
+    .action-buttons a:hover {
+      text-decoration: underline;
+    }
+    .flash-success {
+      color: #155724;
+      font-size: 13px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h2>Admin Dashboard – Students</h2>
+    <a href="{{ url_for('logout') }}" style="font-size:14px; color:#d8000c; text-decoration:none;">[Logout]</a>
+  </div>
+
+  <div class="content">
+    {% with messages = get_flashed_messages(category_filter=["success"]) %}
+      {% if messages %}
+        <div class="flash-success">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+
+    <a href="{{ url_for('admin_add') }}" class="add-btn">+ Add New Student</a>
+
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Roll No</th>
+          <th>Enrollment No</th>
+          <th>Name</th>
+          <th>Faculty</th>
+          <th>Course/Year</th>
+          
+          <th>Result</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in students %}
+        <tr>
+          <td>{{ s.id }}</td>
+          <td>{{ s.roll_no }}</td>
+          <td>{{ s.enrollment_no }}</td>
+          <td style="text-align:left;">{{ s.name }}</td>
+          <td>{{ s.faculty }}</td>
+          <td>{{ s.course_year }}</td>
+          <td>{{ s.result_overall }}</td>
+          <td class="action-buttons">
+            <a href="{{ url_for('admin_edit', student_id=s.id) }}">Edit</a> |
+            <form 
+              method="POST" 
+              action="{{ url_for('admin_delete', student_id=s.id) }}"
+              style="display:inline;"
+              onsubmit="return confirm('Delete this student?');"
+            >
+              <button type="submit" style="background:none; border:none; color:#d8000c; cursor:pointer; font-size:14px;">Delete</button>
+            </form>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</body>
+</html>

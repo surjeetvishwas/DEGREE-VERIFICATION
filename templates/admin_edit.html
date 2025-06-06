@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>{% if student %}Edit{% else %}Add{% endif %} Student</title>
+  <style>
+    body, html {
+      margin: 0; 
+      padding: 0;
+      font-family: "Arial", sans-serif;
+      background: #f2f2f2;
+    }
+    .header {
+      background: #ffffff;
+      border-bottom: 1px solid #dddddd;
+      padding: 10px 20px;
+      text-align: center;
+    }
+    .header h2 {
+      margin: 0;
+      color: #333333;
+    }
+    .content {
+      margin: 20px auto;
+      width: 90%;
+      max-width: 1000px;
+      background: #ffffff;
+      border: 1px solid #dddddd;
+      border-radius: 4px;
+      padding: 20px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+    .content form input[type="text"],
+    .content form input[type="number"] {
+      width: 100%;
+      padding: 8px 10px;
+      margin-bottom: 12px;
+      font-size: 14px;
+      border: 1px solid #cccccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .content form label {
+      display: block;
+      margin-top: 12px;
+      font-weight: 600;
+      color: #333333;
+    }
+    .content form button {
+      padding: 8px 16px;
+      margin-top: 20px;
+      background: #007bdb;
+      color: #ffffff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-size: 14px;
+    }
+    .content form button:hover {
+      background: #005fa3;
+    }
+    .flash-message {
+      color: #d8000c;
+      font-size: 14px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+    .flash-success {
+      color: #155724;
+      font-size: 14px;
+      margin-bottom: 10px;
+      text-align: center;
+    }
+
+    /* SUBJECT ROWS TABLE */
+    .subjects-container {
+      margin-top: 20px;
+    }
+    .subjects-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 14px;
+      margin-bottom: 20px;
+    }
+    .subjects-table th, .subjects-table td {
+      border: 1px solid #cccccc;
+      padding: 6px 8px;
+      text-align: center;
+    }
+    .subjects-table th {
+      background: #1f497d;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .subjects-table input[type="text"],
+    .subjects-table input[type="number"] {
+      width: 100%;
+      padding: 4px 6px;
+      font-size: 13px;
+      border: 1px solid #cccccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+    }
+    .subjects-table .remove-btn {
+      background: #d8000c;
+      color: #ffffff;
+      border: none;
+      border-radius: 3px;
+      padding: 4px 8px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h2>
+      {% if student %}
+        Edit Student – {{ student.roll_no }}
+      {% else %}
+        Add New Student
+      {% endif %}
+    </h2>
+  </div>
+
+  <div class="content">
+    {% with messages = get_flashed_messages(category_filter=["error"]) %}
+      {% if messages %}
+        <div class="flash-message">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+    {% with messages = get_flashed_messages(category_filter=["success"]) %}
+      {% if messages %}
+        <div class="flash-success">{{ messages[0] }}</div>
+      {% endif %}
+    {% endwith %}
+
+    <form
+      method="POST"
+      action="{% if student %}{{ url_for('admin_edit', student_id=student.id) }}{% else %}{{ url_for('admin_add') }}{% endif %}"
+    >
+      <!-- Basic Student Details -->
+      <label for="name">Student Name</label>
+      <input
+        type="text"
+        name="name"
+        id="name"
+        required
+        value="{{ student.name if student else '' }}"
+      />
+
+      <label for="father_name">Father’s Name</label>
+      <input
+        type="text"
+        name="father_name"
+        id="father_name"
+        required
+        value="{{ student.father_name if student else '' }}"
+      />
+
+      <label for="mother_name">Mother’s Name</label>
+      <input
+        type="text"
+        name="mother_name"
+        id="mother_name"
+        required
+        value="{{ student.mother_name if student else '' }}"
+      />
+
+      <label for="faculty">Faculty</label>
+      <input
+        type="text"
+        name="faculty"
+        id="faculty"
+        required
+        value="{{ student.faculty if student else '' }}"
+      />
+
+      <label for="roll_no">Roll Number</label>
+      <input
+        type="text"
+        name="roll_no"
+        id="roll_no"
+        required
+        value="{{ student.roll_no if student else '' }}"
+      />
+
+      <label for="enrollment_no">Enrollment Number</label>
+      <input
+        type="text"
+        name="enrollment_no"
+        id="enrollment_no"
+        required
+        value="{{ student.enrollment_no if student else '' }}"
+      />
+
+      <label for="course_year">Course &amp; Semester</label>
+      <input
+        type="text"
+        name="course_year"
+        id="course_year"
+        required
+        placeholder="eg. LL.B.(Hons.) ‐II Sem"
+        value="{{ student.course_year if student else '' }}"
+      />
+
+      
+
+      
+      
+
+      
+      <label for="result_overall">Result (Pass/Fail)</label>
+      <input
+        type="text"
+        name="result_overall"
+        id="result_overall"
+        required
+        value="{{ student.result_overall if student else '' }}"
+      />
+
+      <!-- SUBJECTS SECTION -->
+      <div class="subjects-container">
+        <label>Subjects</label>
+        <table class="subjects-table" id="subjects-table">
+          <thead>
+            <tr>
+              <th>Semester</th>
+              <th>Code</th>
+              <th>Name</th>
+              <th>Max Exam</th>
+              <th>Max Sess</th>
+              <th>Max Total</th>
+              <th>Marks Exam</th>
+              <th>Marks Sess</th>
+              <th>Marks Total</th>
+              <th>Remove</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if student %}
+              {% for subj in student.subjects %}
+                <tr>
+                  <td><input type="number" name="subj_semester[]" required value="{{ subj.semester }}" /></td>
+                  <td><input type="text" name="subj_code[]" required value="{{ subj.code }}" /></td>
+                  <td><input type="text" name="subj_name[]" required value="{{ subj.name }}" /></td>
+                  <td><input type="number" name="subj_max_exam[]" required value="{{ subj.max_exam }}" /></td>
+                  <td><input type="number" name="subj_max_sess[]" required value="{{ subj.max_sess }}" /></td>
+                  <td><input type="number" name="subj_max_total[]" required value="{{ subj.max_total }}" /></td>
+                  <td><input type="number" name="subj_marks_exam[]" required value="{{ subj.marks_exam }}" /></td>
+                  <td><input type="number" name="subj_marks_sess[]" required value="{{ subj.marks_sess }}" /></td>
+                  <td><input type="number" name="subj_marks_total[]" required value="{{ subj.marks_total }}" /></td>
+                  <td><button type="button" class="remove-btn" onclick="removeRow(this)">—</button></td>
+                </tr>
+              {% endfor %}
+            {% else %}
+              <!-- If no existing student, show one empty row to start -->
+              <tr>
+                <td><input type="number" name="subj_semester[]" required value="" /></td>
+                <td><input type="text" name="subj_code[]" required value="" /></td>
+                <td><input type="text" name="subj_name[]" required value="" /></td>
+                <td><input type="number" name="subj_max_exam[]" required value="0" /></td>
+                <td><input type="number" name="subj_max_sess[]" required value="0" /></td>
+                <td><input type="number" name="subj_max_total[]" required value="0" /></td>
+                <td><input type="number" name="subj_marks_exam[]" required value="0" /></td>
+                <td><input type="number" name="subj_marks_sess[]" required value="0" /></td>
+                <td><input type="number" name="subj_marks_total[]" required value="0" /></td>
+                <td><button type="button" class="remove-btn" onclick="removeRow(this)">—</button></td>
+              </tr>
+            {% endif %}
+          </tbody>
+        </table>
+        <button type="button" onclick="addSubjectRow()">+ Add Subject</button>
+      </div>
+
+      <button type="submit">
+        {% if student %} Update Student {% else %} Add Student {% endif %}
+      </button>
+    </form>
+  </div>
+
+  <script>
+    // Add a new empty subject row
+    function addSubjectRow() {
+      const tableBody = document.querySelector("#subjects-table tbody");
+      const newRow = document.createElement("tr");
+      newRow.innerHTML = `
+        <td><input type="number" name="subj_semester[]" required /></td>
+        <td><input type="text" name="subj_code[]" required /></td>
+        <td><input type="text" name="subj_name[]" required /></td>
+        <td><input type="number" name="subj_max_exam[]" required /></td>
+        <td><input type="number" name="subj_max_sess[]" required /></td>
+        <td><input type="number" name="subj_max_total[]" required /></td>
+        <td><input type="number" name="subj_marks_exam[]" required /></td>
+        <td><input type="number" name="subj_marks_sess[]" required /></td>
+        <td><input type="number" name="subj_marks_total[]" required /></td>
+        <td><button type="button" class="remove-btn" onclick="removeRow(this)">—</button></td>
+      `;
+      tableBody.appendChild(newRow);
+    }
+
+    // Remove a subject row
+    function removeRow(button) {
+      const row = button.closest("tr");
+      row.parentNode.removeChild(row);
+    }
+  </script>
+
+</body>
+</html>
