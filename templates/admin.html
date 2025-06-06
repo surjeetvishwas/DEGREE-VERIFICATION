@@ -43,29 +43,11 @@
     .content .add-btn:hover {
       background: #218838;
     }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 14px;
-    }
-    th, td {
-      border: 1px solid #cccccc;
-      padding: 8px 12px;
-      text-align: center;
-    }
-    th {
-      background: #1f497d;
-      color: #ffffff;
-      font-weight: 600;
-    }
-    .action-buttons a {
-      margin: 0 4px;
-      text-decoration: none;
-      color: #007bdb;
-    }
-    .action-buttons a:hover {
-      text-decoration: underline;
-    }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    th { background: #003366; color: #fff; }
+    img { max-height: 60px; }
+    .action-buttons a, .action-buttons button { margin-right: 8px; }
     .flash-success {
       color: #155724;
       font-size: 13px;
@@ -94,13 +76,10 @@
       <thead>
         <tr>
           <th>ID</th>
-          <th>Roll No</th>
-          <th>Enrollment No</th>
           <th>Name</th>
-          <th>Faculty</th>
-          <th>Course/Year</th>
-          
-          <th>Result</th>
+          <th>Roll No.</th>
+          <th>Email</th>
+          <th>Result Image</th>
           <th>Actions</th>
         </tr>
       </thead>
@@ -108,21 +87,20 @@
         {% for s in students %}
         <tr>
           <td>{{ s.id }}</td>
+          <td>{{ s.name }}</td>
           <td>{{ s.roll_no }}</td>
-          <td>{{ s.enrollment_no }}</td>
-          <td style="text-align:left;">{{ s.name }}</td>
-          <td>{{ s.faculty }}</td>
-          <td>{{ s.course_year }}</td>
-          <td>{{ s.result_overall }}</td>
+          <td>{{ s.email }}</td>
+          <td>
+            {% if s.result_image %}
+              <img src="{{ url_for('static', filename='results/' + s.result_image) }}" alt="Result Image">
+            {% else %}
+              No Image
+            {% endif %}
+          </td>
           <td class="action-buttons">
-            <a href="{{ url_for('admin_edit', student_id=s.id) }}">Edit</a> |
-            <form 
-              method="POST" 
-              action="{{ url_for('admin_delete', student_id=s.id) }}"
-              style="display:inline;"
-              onsubmit="return confirm('Delete this student?');"
-            >
-              <button type="submit" style="background:none; border:none; color:#d8000c; cursor:pointer; font-size:14px;">Delete</button>
+            <a href="{{ url_for('admin_edit', student_id=s.id) }}">Edit</a>
+            <form method="POST" action="{{ url_for('admin_delete', student_id=s.id) }}" style="display:inline;" onsubmit="return confirm('Delete this student?');">
+              <button type="submit" style="background:none; border:none; color:#d8000c; cursor:pointer;">Delete</button>
             </form>
           </td>
         </tr>

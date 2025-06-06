@@ -1,4 +1,5 @@
 import os
+import uuid
 from flask import (
     Flask, render_template, request,
     redirect, url_for, flash, session
@@ -41,32 +42,11 @@ class Subject(db.Model):
 
 class Student(db.Model):
     __tablename__ = "students"
-    id             = db.Column(db.Integer, primary_key=True)
-
-    # Basic personal details:
-    name           = db.Column(db.String(200), nullable=False)
-    father_name    = db.Column(db.String(200), nullable=False)
-    mother_name    = db.Column(db.String(200), nullable=False)
-
-    faculty        = db.Column(db.String(200), nullable=False)  # e.g. “Law College Dehradun”
-    roll_no        = db.Column(db.String(50),  unique=True, nullable=False)
-    enrollment_no  = db.Column(db.String(50),  unique=True, nullable=False)
-
-    course_year    = db.Column(db.String(200), nullable=False)  # e.g. “LL.B.(Hons.) ‐II SEMESTER”
-
-    # Cumulative fields at bottom:
-    total_credits_registered = db.Column(db.Integer, default=0)
-    total_credits_earned     = db.Column(db.Integer, default=0)
-    sgpa                    = db.Column(db.Float,   default=0.0)  # e.g. 8.0
-    cgpa                    = db.Column(db.Float,   default=0.0)  # e.g. 6.6
-    result_overall          = db.Column(db.String(20), nullable=False)  # e.g. “Pass”
-
-    subjects      = db.relationship(
-        "Subject",
-        cascade="all, delete-orphan",
-        backref="student",
-        lazy=True
-    )
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(200), nullable=False)
+    roll_no = db.Column(db.String(50), unique=True, nullable=False)
+    email = db.Column(db.String(200), nullable=False)
+    result_image = db.Column(db.String(200), nullable=False)
 
 
 # Create tables if not present
@@ -98,29 +78,17 @@ def home():
 @app.route("/result", methods=["POST"])
 def result():
     """
-    Handles the form from home.html. Looks up the student by roll_no.
-    If found → render result.html with all fields. Otherwise flash + redirect.
+    Handles the form from home.html. Looks up the student by roll_no and email.
+    If found → render result.html with the image. Otherwise flash + redirect.
     """
     roll_no = request.form.get("roll_no", "").strip()
-    if not roll_no:
-        flash("Please enter a valid Roll Number.", "error")
-        return redirect(url_for("home"))
-
-    student = Student.query.filter_by(roll_no=roll_no).first()
+    email = request.form.get("email", "").strip()
+    student = Student.query.filter_by(roll_no=roll_no, email=email).first()
     if not student:
-        flash("No record found for that Roll Number.", "error")
+        flash("No record found for that Roll Number and Email.", "error")
         return redirect(url_for("home"))
 
-    # Calculate the “Total Marks Obtained” and “Total Max Marks” columns in Python:
-    total_max = sum(sub.max_total for sub in student.subjects)
-    total_obt = sum(sub.marks_total for sub in student.subjects)
-
-    return render_template(
-        "result.html",
-        student=student,
-        total_max=total_max,
-        total_obt=total_obt
-    )
+    return render_template("result.html", student=student)
 
 
 # ─── AUTH ROUTES ─────────────────────────────────────────────────────────────
@@ -168,51 +136,23 @@ def admin_add():
     On POST → Validate + insert Student and all associated Subject rows.
     """
     if request.method == "POST":
-        # 1) Create the Student record
-        s = Student(
-            name           = request.form["name"].strip(),
-            father_name    = request.form["father_name"].strip(),
-            mother_name    = request.form["mother_name"].strip(),
-            faculty        = request.form["faculty"].strip(),
-            roll_no        = request.form["roll_no"].strip(),
-            enrollment_no  = request.form["enrollment_no"].strip(),
-            course_year    = request.form["course_year"].strip(),
-            result_overall = request.form["result_overall"].strip()
-        )
+        name = request.form["name"].strip()
+        roll_no = request.form["roll_no"].strip()
+        email = request.form["email"].strip()
+        file = request.files["result_image"]
+        if file and file.filename:
+            filename = f"{uuid.uuid4().hex}_{file.filename}"
+            save_path = os.path.join(app.static_folder, "results", filename)
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            file.save(save_path)
+        else:
+            flash("Result image is required.", "error")
+            return redirect(request.url)
+        s = Student(name=name, roll_no=roll_no, email=email, result_image=filename)
         db.session.add(s)
-        db.session.flush()  # To get s.id for subjects
-
-        # 2) Add all Subject rows:
-        #    We expect parallel lists of form data:
-        codes       = request.form.getlist("subj_code[]")
-        names       = request.form.getlist("subj_name[]")
-        semesters   = request.form.getlist("subj_semester[]")
-        max_exam    = request.form.getlist("subj_max_exam[]")
-        max_sess    = request.form.getlist("subj_max_sess[]")
-        max_total   = request.form.getlist("subj_max_total[]")
-        marks_exam  = request.form.getlist("subj_marks_exam[]")
-        marks_sess  = request.form.getlist("subj_marks_sess[]")
-        marks_total = request.form.getlist("subj_marks_total[]")
-
-        for i in range(len(codes)):
-            subj = Subject(
-                student_id    = s.id,
-                semester      = int(semesters[i]),
-                code          = codes[i],
-                name          = names[i],
-                max_exam      = int(max_exam[i]),
-                max_sess      = int(max_sess[i]),
-                max_total     = int(max_total[i]),
-                marks_exam    = int(marks_exam[i]),
-                marks_sess    = int(marks_sess[i]),
-                marks_total   = int(marks_total[i])
-            )
-            db.session.add(subj)
         db.session.commit()
-        flash("Student and subjects added successfully.", "success")
+        flash("Student added.", "success")
         return redirect(url_for("admin"))
-
-    # GET → show blank “add/edit” form
     return render_template("admin_edit.html", student=None)
 
 
@@ -225,45 +165,17 @@ def admin_edit(student_id):
     student = Student.query.get_or_404(student_id)
 
     if request.method == "POST":
-        # 1) Update Student fields
-        student.name            = request.form["name"].strip()
-        student.father_name     = request.form["father_name"].strip()
-        student.mother_name     = request.form["mother_name"].strip()
-        student.faculty         = request.form["faculty"].strip()
-        student.roll_no         = request.form["roll_no"].strip()
-        student.enrollment_no   = request.form["enrollment_no"].strip()
-        student.course_year     = request.form["course_year"].strip()
-        student.result_overall  = request.form["result_overall"].strip()
-
-        # 2) Delete old subjects and re‐insert new ones
-        Subject.query.filter_by(student_id=student.id).delete()
-        codes       = request.form.getlist("subj_code[]")
-        names       = request.form.getlist("subj_name[]")
-        semesters   = request.form.getlist("subj_semester[]")
-        max_exam    = request.form.getlist("subj_max_exam[]")
-        max_sess    = request.form.getlist("subj_max_sess[]")
-        max_total   = request.form.getlist("subj_max_total[]")
-        marks_exam  = request.form.getlist("subj_marks_exam[]")
-        marks_sess  = request.form.getlist("subj_marks_sess[]")
-        marks_total = request.form.getlist("subj_marks_total[]")
-
-        for i in range(len(codes)):
-            subj = Subject(
-                student_id    = student.id,
-                semester      = int(semesters[i]),
-                code          = codes[i],
-                name          = names[i],
-                max_exam      = int(max_exam[i]),
-                max_sess      = int(max_sess[i]),
-                max_total     = int(max_total[i]),
-                marks_exam    = int(marks_exam[i]),
-                marks_sess    = int(marks_sess[i]),
-                marks_total   = int(marks_total[i])
-            )
-            db.session.add(subj)
-
+        student.roll_no = request.form["roll_no"].strip()
+        student.email = request.form["email"].strip()
+        file = request.files.get("result_image")
+        if file and file.filename:
+            filename = f"{uuid.uuid4().hex}_{file.filename}"
+            save_path = os.path.join(app.static_folder, "results", filename)
+            os.makedirs(os.path.dirname(save_path), exist_ok=True)
+            file.save(save_path)
+            student.result_image = filename
         db.session.commit()
-        flash("Student record updated successfully.", "success")
+        flash("Student updated.", "success")
         return redirect(url_for("admin"))
 
     # GET → render form pre‐filled

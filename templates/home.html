@@ -70,7 +70,8 @@
     }
 
     /* Form Styles */
-    .degree-form input[type="text"] {
+    .degree-form input[type="text"],
+    .degree-form input[type="email"] {
       width: 80%;
       max-width: 400px;
       padding: 12px 16px;
@@ -82,7 +83,8 @@
       outline: none;
       transition: border-color 0.2s;
     }
-    .degree-form input[type="text"]:focus {
+    .degree-form input[type="text"]:focus,
+    .degree-form input[type="email"]:focus {
       border-color: #d46a6a;
     }
     .degree-form button {
@@ -147,6 +149,12 @@
           type="text"
           name="roll_no"
           placeholder="Enter Roll Number"
+          required
+        /><br />
+        <input
+          type="email"
+          name="email"
+          placeholder="Enter Email"
           required
         /><br />
         <button type="submit">Get Result</button>
